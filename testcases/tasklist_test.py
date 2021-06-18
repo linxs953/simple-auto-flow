@@ -12,21 +12,10 @@ class TestCommonService(TestStep):
           method="get",
           data=None,
           headers={"header":"xss"},
-          desire_result={"code":200}
+          desire_result={"code": 200}
         )
         print("init successfully")
-    #
-    # @classmethod
-    # def setup_class(cls):
-    #     print("setup method")
-    #     # cls.init_resource(
-    #     #   request_url="",
-    #     #   data="",
-    #     #   headers={},
-    #     #   method="",
-    #     #   desire_result={},
-    #     #   parent=Suit()
-    #     # )
+
 
     def teardown_method(self, method):
         time.sleep(1)
