@@ -1,0 +1,41 @@
+global:
+   host: "https://www.bazhuayu.com"
+steps:
+   - step:
+      stepname: "getToken"
+      request:
+        pre: {}
+        method: "POST"
+        urlPath: "/token"
+        data: {}
+      response:
+        code: 200
+        error: ""
+        error_description: ""
+   - step:
+      stepname: "getTaskList" 
+      request:
+        pre: 
+          - preStep: 
+            name: "getToken"
+            addTo: 
+              type: "Headers" # Headers / Body
+              location: "Authorization" # Data.taskId
+            field:
+              - assess_token
+          - preStep:
+            name: "getTaskList"
+            refer: 
+              - name: "taskId"
+                field: "data.dataList[0].taskId"
+            addTo:
+              type: "Query"
+              location: ""
+        name: ""
+        method: "POST"
+        urlPath: "/serachListV2/{{getTaskList.refer.taskId}}"
+        data: {}
+      response:
+        code: 200
+        error: "success"
+        # error_description: ""
