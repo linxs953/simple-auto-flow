@@ -10,7 +10,7 @@ class StatusCodeInvalidException(Exception):
     pass
 
 
-class SRequest:
+class Request:
     def __init__(self):
         self.client = httpx.Client()
         self.client.timeout = req_timeout
