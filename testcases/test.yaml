@@ -1,6 +1,7 @@
 global:
    host: "https://www.bazhuayu.com"
    name: "example" # 生成的文件后缀名
+   retry: 5
 steps:
    - step:
       stepname: "getToken"
@@ -10,6 +11,9 @@ steps:
         host: "https://auth.bazhuayu.com"
         urlPath: "/token"
         data: {}
+        header:
+          #  custom request headers
+          User-Agent: ""
       response:
         code: 200
         error: ""
@@ -19,29 +23,30 @@ steps:
       retry: 5 #todo step重试暂时不考虑
       request:
         pre: 
-          - preStep: 
-            name: "getToken"
+          - name: "getToken"
             addTo: 
               type: "Headers" # Headers / Body
               location: "Authorization" # data.dataList.taskId
             refer:
               - name: "token"
                 field: "assess_token"
-          - preStep:
-            name: "getTaskList"
+          - name: "getTaskList"
             refer: 
               - name: "taskId"
-                field: "data.dataList[0].taskId"
+                field: "data.dataList.taskId"
             addTo:
               type: "Query"
               location: "url"
             # addTo:
             #   type: "Path"
             #   location: "url"
-        name: ""
+        # name: ""
         method: "POST"
-        urlPath: "/serachListV2/{{getTaskList.refer.taskId}}"
+        urlPath: "/serachListV2/{{getTaskList.refer.taskId}}/"
         data: {}
+        header:
+          #  custom request headers
+          User-Agent: ""
       response:
         code: 200
         error: "success"
