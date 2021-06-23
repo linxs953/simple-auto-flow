@@ -12,7 +12,7 @@ class StatusCodeInvalidException(Exception):
 
 class Request:
     def __init__(self):
-        self.client = httpx.Client()
+        self.client = httpx.Client(verify=False)
         self.client.timeout = req_timeout
 
     def set_headers(self, **headers):
@@ -22,7 +22,6 @@ class Request:
 
     def POST(self, url: str, data: dict, code: int, **headers) -> (dict, Exception):
         self.set_headers(**headers)
-        print(self.client.headers)
         try:
             resp = self.client.post(url=url, data=data, headers=self.client.headers)
             if resp.status_code != code:
