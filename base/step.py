@@ -28,10 +28,12 @@ class Step:
         self.retry = retry
         self.result = dict()
 
-    def assert_result(self, current, desire):
-        for k,_ in desire:
+    def assert_result(self):
+        
+        for k,_ in self.desire_result.items():
             # todo: assert error
-            assert current[k] == desire.get(k)
+            assert self.result[k] == self.desire_result.get(k)
+        logging.info(f"assert Step `{self.name}` successfully")
     
     def get_url_path(self) -> str:
         parsed = urlparse(self.request_url)
