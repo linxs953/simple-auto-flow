@@ -21,6 +21,7 @@ def searchInPreSteps(refer_express: str, preSteps: list):
             break
         
         if index+1 == len(preSteps):
+            # 这里其实不会出现pre step找不到的情况，在解析yaml的时候会验证引用是否合法有效，这里主要再做个保险
             #  log: not found step
             return
     
@@ -33,6 +34,7 @@ def searchInPreSteps(refer_express: str, preSteps: list):
                         field = f['field'] 
                         return field
                     if index_+1 == len(result):
+                        # 这里出现的情况是：result是refer字段，然后无法匹配refer中定义的字段
                         # log: not found refer name
                         return
             else:
