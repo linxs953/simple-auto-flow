@@ -1,21 +1,20 @@
 import logging
-from msilib.schema import Error
 import sys
-from time import sleep
 import re
-sys.path.append("..")
 
-import pytest
-from base.session import Request
+sys.path.append("")
+
+from session import Request
 from urllib.parse import urlparse
 from utils.step import *
-from base.suit import Suit
+from main import setup
 
+logging.basicConfig(level = logging.INFO)
 
 class Step:
-    def init_resource(self, stepname: str,  request_url: str, method: str, data: dict, 
-                      headers: str, desire_result: dict, pre: list, 
-                      setupFunc: function, endFunc: function=None):
+    def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
+                      headers: str, desire_result: dict, pre: list, retry: int,
+                      setupFunc:str, endFunc:str):
         self.session = Request()
         self.name = stepname
         self.method = str(method).upper()
@@ -26,6 +25,7 @@ class Step:
         self.pre = pre
         self.setup = setupFunc
         self.end = endFunc
+        self.retry = retry
         self.result = dict()
 
     def assert_result(self, current, desire):
@@ -37,7 +37,7 @@ class Step:
         parsed = urlparse(self.request_url)
         return parsed.path
 
-    def setPre(self, parent: Suit):
+    def setPre(self):
         for _,preStep in self.pre:
             if preStep:
                 if preStep.get("addTo","empty") == "Headers":
@@ -52,8 +52,8 @@ class Step:
                         self.data[k] = data[k]
                 else:
                     # 处理type是Query / Path
-                    addTo = preStep.get("addTo","empty")
-                    if addTo != "empty" and addTo["type"] in ["Path","Query"]:
+                    addTo = preStep.get("addTo","")
+                    if addTo != "" and addTo["type"] in ["Path","Query"]:
                         if "{{" in self.request_url and "}}" in self.request_url:
                             refer_regex = "\{\{(.*)\}\}"
                             regex_obj = re.search(refer_regex,self.request_url)
@@ -64,7 +64,7 @@ class Step:
                                     # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
                                     # log: not found prestep / prestep.{key} / prestep.refer.name
                                     exit(1)
-                                field_value = extractField(field_refer,parent.result.get(self.name))
+                                field_value = extractField(field_refer,preStep.get['response'])
                                 if field_value is None:
                                     # 根据引用关系无法在response中提取到具体的value
                                     # log: not extract field value
@@ -73,24 +73,31 @@ class Step:
                                 
                                 
             
-    def run(self, parent: Suit):
+    def run(self):
         if self.pre is not None:
-            self.setPre(parent)
-        if self.setup is not None:
+            self.setPre()
+        if self.setup is not None and callable(self.setup):
+            print(f"running setup method `{self.setup.__name__}`")
             self.setup()
         self.runRequest()
-        if self.end is not None:
+        if self.end is not None and callable(self.end):
+            print(f"running teardown method `{self.end.__name__}`")
             self.end()
         
     def runRequest(self):
-        print(f"self.session.{self.method}({self.request_url},{self.data},{self.desire_result['code']},{self.headers})")
         resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result['code']}, **{self.headers})")
-        print(exception)
+        # print(exception)            
         if exception is not None:
             logging.error(f"{self.method} {self.request_url} error, {exception}")
+            logging.info(f"send request failed for {exception}")
+            self.retry = self.retry - 1
+            if self.retry >  0:
+                self.runRequest()
             exit(1)
+        logging.info(f"Run Step `{self.name}` Successfully")
         self.result = resp
 
 
 if __name__ == '__main__':
-      pytest.main()
+      pass
+      
