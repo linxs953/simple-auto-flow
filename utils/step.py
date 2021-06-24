@@ -5,6 +5,9 @@
 """
 
 
+import logging
+
+
 def searchInPreSteps(refer_express: str, preSteps: list):
     if "." not in refer_express:
         # log: refer format error
@@ -23,6 +26,7 @@ def searchInPreSteps(refer_express: str, preSteps: list):
         if index+1 == len(preSteps):
             # 这里其实不会出现pre step找不到的情况，在解析yaml的时候会验证引用是否合法有效，这里主要再做个保险
             #  log: not found step
+            logging.error(f"not found step {refer_express_parts[0]}")
             return
     
     result = step
@@ -52,7 +56,6 @@ def searchInPreSteps(refer_express: str, preSteps: list):
 def extractField(field_refer: str, body: dict):
     if "." not in field_refer:
         #  有可能字段名错误拿不到值，返回None
-        # print(body)
         field = body.get(field_refer,None)
         return field
     field_refer_parts = field_refer.split(".")
@@ -118,4 +121,4 @@ if __name__ == '__main__':
         "refresh_token": "9a11d2e7045c497c9cb4a1da27d9f2dc"
     }
     data = extractField("body.access_token.0.value",data)
-    print(data)
+    # print(data)
