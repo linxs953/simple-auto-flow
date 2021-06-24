@@ -1,11 +1,11 @@
+from base.step import Step
+from base.suit import Suit
 import time
 import sys
 sys.path.append("..")
 import pytest
-from base.step import TestStep
 
-
-class TestCommonService(TestStep):
+class TestCommonService(Suit):
     def setup_method(self, method):
         self.init_resource(
           request_url="https://zhidao.baidu.com/task/api/getmytasklist?popFlag=1&status=done&_=1623232353334",
@@ -21,7 +21,7 @@ class TestCommonService(TestStep):
         time.sleep(1)
         print("teardown")
 
-    # @pytest.mark.flaky(reruns=5)
+    @pytest.mark.flaky(reruns=5)
     def test_common_service(self):
         self.runRequest()
         print(self.result)
