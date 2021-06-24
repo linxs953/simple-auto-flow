@@ -31,6 +31,7 @@ class Request:
             if resp.text == "":
                 return dict(), None
             resp_data = json.loads(resp.text)
+            resp_data['code'] = resp.status_code
             return dict(resp_data), None
         except httpx.TimeoutException as timeout:
             logging.error(timeout)
@@ -43,7 +44,6 @@ class Request:
         self.set_headers(**headers)
         try:
             resp = self.client.get(url, params=params)
-            print(resp.text)
             if resp.status_code != code:
                 # 返回的状态码不对
                 return \
@@ -52,6 +52,7 @@ class Request:
             if resp.text == "":
                 return dict(), None
             resp_data = json.loads(resp.text)
+            resp_data['code'] = resp.status_code
             return dict(resp_data), None
         except StatusCodeInvalidException as sce:
             logging.error(sce)
