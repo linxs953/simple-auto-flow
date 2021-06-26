@@ -1,6 +1,6 @@
 global:
-   host: "https://www.bazhuayu.com"
-   name: "example" # 生成的文件后缀名
+   host: "https://www.example.com"
+   name: "Login"
    retry: 5
 steps:
    - step:
@@ -8,46 +8,39 @@ steps:
       request:
         pre: {}
         method: "POST"
-        host: "https://auth.bazhuayu.com"
+        host: "https://auth.example.com"
         urlPath: "/token"
         data: {}
         header:
-          #  custom request headers
-          User-Agent: ""
-      response:
-        code: 200
-        error: ""
-        error_description: ""
-   - step:
-      stepname: "getTaskList" 
-      retry: 5 #todo step重试暂时不考虑
-      request:
-        pre: 
-          - name: "getToken"
-            addTo: 
-              type: "Headers" # Headers / Body
-              location: "Authorization" # data.dataList.taskId
-            refer:
-              - name: "token"
-                field: "assess_token"
-          - name: "getTaskList"
-            refer: 
-              - name: "taskId"
-                field: "data.dataList.taskId"
-            addTo:
-              type: "Query"
-              location: "url"
-            # addTo:
-            #   type: "Path"
-            #   location: "url"
-        # name: ""
-        method: "POST"
-        urlPath: "/serachListV2/{{getTaskList.refer.taskId}}/"
-        data: {}
-        header:
-          #  custom request headers
           User-Agent: ""
       response:
         code: 200
         error: "success"
-        # error_description: ""
+   - step:
+      stepname: "getDataList" 
+      retry: 5
+      request:
+        pre: 
+          - name: "getToken"
+            addTo: 
+              type: "Headers" # Body / Query / Url 
+              location: "Authorization" # add to headers or request body
+            refer:
+              - name: "token"
+                field: "token"
+          - name: "getDataList"
+            refer: 
+              - name: "Id"
+                field: "data.dataList.Id" # response data refer relationship
+            addTo:
+              type: "Query"
+              location: "url"
+        method: "POST"
+        host: "https://example.com"
+        urlPath: "/serach/{{getDataList.refer.Id}}/"
+        data: None
+        header:
+          User-Agent: ""
+      response:
+        code: 200
+        error: "success"
