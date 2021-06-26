@@ -1,9 +1,8 @@
 import typing
-import pytest
 import sys
-sys.path.append("..")
+sys.path.append(".")
 
-from step import Step
+from base.step import Step
 
 
 class Suit:
@@ -19,13 +18,13 @@ class Suit:
             # 动态执行preStep中的$a.b.c()
             for p in step.pre:
                 p['response'] = eval(f"{p['response'].replace('$suit','self')}")
+                print(p['response'])
             # 执行step
             step.run()
             # 验证response
             step.assert_result()
             # 验证成功，将step的结果写入到suit.result
             self.result[step.name] = step.result
-        print(self.result['getTaskLocalConfig'])
 
 
 if __name__ == '__main__':

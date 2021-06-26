@@ -2,18 +2,17 @@ import logging
 import sys
 import re
 
-sys.path.append("")
+sys.path.append(".")
 
-from session import Request
+from base.session import Request
 from urllib.parse import urlparse
 from utils.step import *
-from main import setup
 
 logging.basicConfig(level = logging.INFO)
 
 class Step:
     def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
-                      headers: str, desire_result: dict, pre: list, retry: int,
+                      headers: dict, desire_result: dict, pre: list, retry: int,
                       setupFunc:str, endFunc:str):
         self.session = Request()
         self.name = stepname
@@ -78,7 +77,7 @@ class Step:
                 if preStep.get("refer",None) != None and preStep.get("response",None) != None:
                     resp = preStep.get('response')
                     if "{{" in self.request_url and "}}" in self.request_url:
-                        refer_regex = "\{\{(.*)\}\}"
+                        refer_regex = r"\{\{(.*)\}\}"
                         regex_obj = re.search(refer_regex,self.request_url)
                         refer_relation = regex_obj.group(1)
                         if refer_relation != "":

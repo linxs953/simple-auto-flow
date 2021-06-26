@@ -3,7 +3,7 @@ import logging
 
 import httpx
 
-req_timeout = 3
+req_timeout = 10
 
 
 class StatusCodeInvalidException(Exception):
