@@ -3,16 +3,16 @@ import logging
 
 import httpx
 
-req_timeout = 3
+req_timeout = 10
 
 
 class StatusCodeInvalidException(Exception):
     pass
 
 
-class SRequest:
+class Request:
     def __init__(self):
-        self.client = httpx.Client()
+        self.client = httpx.Client(verify=False)
         self.client.timeout = req_timeout
 
     def set_headers(self, **headers):
@@ -22,7 +22,6 @@ class SRequest:
 
     def POST(self, url: str, data: dict, code: int, **headers) -> (dict, Exception):
         self.set_headers(**headers)
-        print(self.client.headers)
         try:
             resp = self.client.post(url=url, data=data, headers=self.client.headers)
             if resp.status_code != code:
@@ -32,6 +31,7 @@ class SRequest:
             if resp.text == "":
                 return dict(), None
             resp_data = json.loads(resp.text)
+            resp_data['code'] = resp.status_code
             return dict(resp_data), None
         except httpx.TimeoutException as timeout:
             logging.error(timeout)
@@ -44,7 +44,6 @@ class SRequest:
         self.set_headers(**headers)
         try:
             resp = self.client.get(url, params=params)
-            print(resp.text)
             if resp.status_code != code:
                 # 返回的状态码不对
                 return \
@@ -53,6 +52,7 @@ class SRequest:
             if resp.text == "":
                 return dict(), None
             resp_data = json.loads(resp.text)
+            resp_data['code'] = resp.status_code
             return dict(resp_data), None
         except StatusCodeInvalidException as sce:
             logging.error(sce)
