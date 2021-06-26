@@ -95,7 +95,7 @@ pytest testcases/
 - [x] 支持yaml格式
 - [x] 能够转成python 测试代码
 - [x] 当前Step可以引用所在Case的前置Step的数据
-- [ ] 支持全局变量，多case共享ß
+- [ ] 支持全局变量，多case共享
 - [ ] 支持报告
 - [ ] 支持har格式
 - [ ] 支持其他协议的接口  
