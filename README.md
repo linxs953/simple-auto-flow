@@ -15,10 +15,10 @@
 
 ###### 基于以上，需要一个简易的API测试脚手架，能够满足以下基础功能
 
-- 通过yaml声明一条case
+- 通过yaml声明一条用例(Suit)
 - 能够将yaml文件转换成python代码
-- 支持`step`间数据引用传递
-- `step` 和 `case` 支持重试
+- 支持`Step`间数据引用传递
+- 支持`Step` 和 `Suit`级别的重试
 ## Quick Start
 
 ###### 1. 编写yaml
@@ -87,7 +87,20 @@ pytest testcases/
 
 ## Overview 
 
-> todo
+#### 相关concept
+
+- Request: Request封装了http请求的常用方法，如`POST` , `GET`等，返回response.text
+- Step: 一个Step描述的是一个API请求，用来管理Request对象，以及加上`retry`，`beforeRequest`, `afterRequest`等特性
+- Suit: 一个Suit描述的是一条用例，由多个Step组成，存储Step执行后的结果，供其他Step使用。
+<br>
+
+![执行流程](./assert/执行流程图.png)
+
+<br>
+<br>
+
+![运行原理](./assert/auto-flow-framework.png)
+
 
 
 ## Feature
@@ -95,7 +108,7 @@ pytest testcases/
 - [x] 支持yaml格式
 - [x] 能够转成python 测试代码
 - [x] 当前Step可以引用所在Case的前置Step的数据
-- [ ] 支持全局变量，多case共享
+- [ ] 支持全局变量，多Suit共享
 - [ ] 支持报告
 - [ ] 支持har格式
 - [ ] 支持其他协议的接口  
