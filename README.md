@@ -87,11 +87,11 @@ pytest testcases/
 
 ## Overview 
 
-#### 相关concept
+#### 相关concept
 
-- Request: Request封装了http请求的常用方法，如`POST` , `GET`等，返回response.text
-- Step: 一个Step描述的是一个API请求，用来管理Request对象，以及加上`retry`，`beforeRequest`, `afterRequest`等特性
-- Suit: 一个Suit描述的是一条用例，由多个Step组成，存储Step执行后的结果，供其他Step使用。
+- **Request**:    Request封装了http请求的常用方法，如`POST` , `GET`等，返回response.text
+- **Step**:       一个Step描述的是一个API请求，用来管理Request对象，以及加上`retry`，`beforeRequest`, `afterRequest`等特性
+- **Suit**:       一个Suit描述的是一条用例，由多个Step组成，存储Step执行后的结果，供其他Step使用。
 <br>
 
 ![执行流程](./assert/执行流程图.png)
