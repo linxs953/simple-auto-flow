@@ -18,7 +18,6 @@ class Suit:
             # 动态执行preStep中的$a.b.c()
             for p in step.pre:
                 p['response'] = eval(f"{p['response'].replace('$suit','self')}")
-                print(p['response'])
             # 执行step
             step.run()
             # 验证response
