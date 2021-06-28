@@ -1,4 +1,5 @@
 import sys
+from xml.dom.minidom import Element
 from base.yaml2code import *
 import os
 import logging
@@ -8,11 +9,24 @@ logging.basicConfig(level = logging.INFO)
 
 base_dir = os.getcwd()
 
-def run(path: list, output: str):
-    # 获取path下所有以yaml开头的文件
-    if not os.path.exists(path) or not os.path.exists(output):
-        logging.error(f"path `{path}` or `{output}` not exists")        
+def run(path: str, output: str):
+    if os.path.exists(path) and os.path.exists(output):
+        if os.path.isfile(path) and os.path.isdir(output):
+            logging.error("source path type != output path type")
+            exit(1)
+        if os.path.isdir(path) and os.path.isfile(output):
+            logging.error("source path type != output path type")
+            exit(1)
+    else:
+        logging.error("source path or output path not exists")
         exit(1)
+
+    if os.path.isfile(path):
+        case = YamlCase(source=path,output=output)
+        case.run()
+        return
+        
+    # 获取path下所有以yaml开头的文件
     
     if not path.endswith("/"):
         path = path + "/"
