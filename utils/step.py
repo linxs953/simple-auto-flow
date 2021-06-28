@@ -82,6 +82,9 @@ def extractField(field_refer: str, body: dict):
             else:
                 # log: not dict, return None, for not found data by refer_expression
                 return
+        except Exception as e:
+            logging.error(e)
+            exit(1)
     return field
     
         
