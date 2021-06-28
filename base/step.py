@@ -34,7 +34,7 @@ class Step:
                 try:
                     assert self.result[k] == self.desire_result.get(k)
                 except AssertionError:
-                    logging.error(f"Assert [{k}] field failed. desire got  `{self.result[k]}``  actually got  `{self.desire_result[k]}`` in [{self.method.upper()}] {self.request_url}")
+                    logging.error(f"Assert [{k}] field failed. desire got  `{self.desire_result[k]}``  actually got  `{self.result[k]}`` in [{self.method.upper()}] {self.request_url}")
                     exit(1)
         logging.info(f"assert Step `{self.name}` successfully")
     
@@ -91,7 +91,8 @@ class Step:
                                 # 根据引用关系无法在response中提取到具体的value
                                 # log: not extract field value
                                 exit(1)
-                            self.request_url = self.request_url.replace("{{","").replace("}}","").replace(refer_relation,field_value)
+                            # 提取的数据是int类型字段时，临时转成string
+                            self.request_url = str(self.request_url).replace("{{","",-1).replace("}}","",-1).replace(refer_relation,f"{field_value}", -1)
                                 
                                 
             
