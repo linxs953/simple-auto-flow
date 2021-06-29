@@ -12,7 +12,7 @@ logging.basicConfig(level = logging.INFO)
 
 class Step:
     def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
-                      headers: dict, desire_result: dict, pre: list, retry: int,
+                      headers: dict, desire_result: list, pre: list, retry: int,
                       setupFunc:str, endFunc:str):
         self.session = Request()
         self.name = stepname
@@ -27,15 +27,34 @@ class Step:
         self.retry = retry
         self.result = dict()
 
+    def assert_operations(self, desire, symbol, current)-> bool:
+        if type(desire) != type(current):
+            logging.error("desire value type not equal to current type")
+            return False
+        if symbol == "gt":
+            return current > desire
+        if symbol == "lt":
+            return current < desire
+        if symbol == "include":
+            if type(desire) != str:
+                logging.error("assert symbol set [include],data type unsuppport except str")
+                return False
+            return desire in current
+        if symbol == "eq":
+            logging.error(current)
+            logging.error(desire)
+            return current == desire
+
     def assert_result(self):
-        for k,_ in self.desire_result.items():
-            # todo: assert error
-            if self.result.get(k,"") != "":
-                try:
-                    assert self.result[k] == self.desire_result.get(k)
-                except AssertionError:
-                    logging.error(f"Assert [{k}] field failed. desire got  `{self.desire_result[k]}``  actually got  `{self.result[k]}`` in [{self.method.upper()}] {self.request_url}")
-                    exit(1)
+        for result in self.desire_result:
+            assert_ops = result.get("assert")
+            field = result.get("field")
+            desire = result.get("desire")
+            if self.assert_operations(desire, assert_ops,self.result[field]):
+                continue
+            else:
+                logging.error(f"{type(self.result[field])}, {type(desire)}, {assert_ops}")
+                exit(1)
         logging.info(f"assert Step `{self.name}` successfully")
     
     def get_url_path(self) -> str:
@@ -107,7 +126,7 @@ class Step:
             self.end()
         
     def runRequest(self):
-        resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result['code']}, **{self.headers})")
+        resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result[0].get('desire')}, **{self.headers})")
         if exception is not None:
             logging.error(f"{self.method} {self.request_url} error, {exception}")
             logging.info(f"send request failed for {exception}")
