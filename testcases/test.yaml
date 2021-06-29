@@ -36,11 +36,22 @@ steps:
               type: "Query"
               location: "url"
         method: "POST"
+        setup: "" # setup function name
+        teardown: "" # teardown function name
         host: "https://example.com"
         urlPath: "/serach/{{getDataList.refer.Id}}/"
         data: None
         header:
           User-Agent: ""
-      response:
-        code: 200
-        error: "success"
+      response: [
+        {
+          "field": "code",
+          "assert": "equal",
+          "desire": "200"
+        },
+        {
+          "field": "success",
+          "assert": "eq", # gt lt f
+          "desire": "success"
+        },
+      ]
