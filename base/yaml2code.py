@@ -131,6 +131,8 @@ class YamlCase:
         stepesParam = list()
         for st in steps:
             s = st.get("step")
+            setup_func = s.get('request').get('setup',None)
+            teardown_func  = s.get('request').get('teardown_func',None)
             url = f"{s.get('request').get('host')}{s.get('request').get('urlPath')}"
             element = f"""(
                 "{s.get("stepname")}",
@@ -141,10 +143,11 @@ class YamlCase:
                 {s.get("response")},
                 {s.get("request").get("pre")},
                 {s.get("retry")},
-                {None},
-                {None}
+                {setup_func},
+                {teardown_func}
               )
             """
+            # print(element)
             stepesParam.append(
                 element
             )

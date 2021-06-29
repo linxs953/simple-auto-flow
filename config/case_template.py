@@ -4,6 +4,7 @@ sys.path.append(".")
 from base.suit import Suit
 from base.step import Step
 import pytest
+from main import *
 class Test{}(Suit):
     def setup_method(self, method):
         self.init_resource([])

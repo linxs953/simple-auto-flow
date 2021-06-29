@@ -5,4 +5,7 @@ from time import sleep
 
 
 def setup():
-    sleep(10)
+    sleep(300)
+
+def stop_schedule():
+    sleep(90)
