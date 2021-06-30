@@ -10,6 +10,10 @@
 
 import yaml
 import logging
+import sys
+sys.path.append("")
+from config import case_template
+from yapf.yapflib.yapf_api import FormatCode
 
 
 
@@ -164,9 +168,7 @@ class YamlCase:
             else:
                 code = f"Step(*{params[i]}),"
             stepsCode += code
-        import sys
-        sys.path.append("")
-        from config import case_template
+ 
         fileCode = case_template.code
         fileCode = fileCode.format(
             data.get('global').get('name'),
@@ -177,7 +179,6 @@ class YamlCase:
         return fileCode
     
     def write_file(self,code: str, path: str) -> bool:
-        from yapf.yapflib.yapf_api import FormatCode
         data,ok = FormatCode(code,style_config='{based_on_style: pep8, indent_width: 4, split_before_logical_operator: true}')
         if ok:
             with open(path, 'w') as codefile:
