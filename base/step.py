@@ -1,6 +1,9 @@
+from aifc import Error
+from cmath import log
 import logging
-import sys
+from operator import truediv
 import re
+import sys
 
 sys.path.append(".")
 
@@ -9,6 +12,12 @@ from urllib.parse import urlparse
 from utils.step import *
 
 logging.basicConfig(level = logging.INFO)
+
+class RetryExcceedError(Error):
+    pass
+
+class SetPreStepError(Error):
+    pass
 
 class Step:
     def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
@@ -41,91 +50,98 @@ class Step:
                 return False
             return desire in current
         if symbol == "eq":
-            logging.error(current)
-            logging.error(desire)
             return current == desire
 
-    def assert_result(self):
+    def assert_result(self) -> bool:
         for result in self.desire_result:
             assert_ops = result.get("assert")
             field = result.get("field")
             desire = result.get("desire")
-            if self.assert_operations(desire, assert_ops,self.result[field]):
-                continue
-            else:
-                logging.error(f"{type(self.result[field])}, {type(desire)}, {assert_ops}")
-                exit(1)
+            try:
+                assert self.assert_operations(desire, assert_ops,self.result[field]) == True
+            except AssertionError:
+                logging.error(f"Assert Error {type(self.result[field])}, {type(desire)}, {assert_ops}")
+                return False
         logging.info(f"assert Step `{self.name}` successfully")
+        return True
     
     def get_url_path(self) -> str:
         parsed = urlparse(self.request_url)
         return parsed.path
-
-    def setPre(self):
+    
+    def getReferData(self,expression: str, pres: list, resp_data: dict):
+        field_refer = searchStepInPres(expression,pres)
+        if field_refer is None:
+                # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
+                # log: not found prestep / prestep.{key} / prestep.refer.name
+                return None, False
+        field_value = extractField(field_refer,resp_data)
+        if field_value is None:
+            # 根据引用关系无法在response中提取到具体的value
+            # log: not extract field value
+            return None, False
+        return field_value,True
+    
+    def setPre(self) -> bool:
         for preStep in self.pre:
+            if preStep.get("refer",None) == None:
+                logging.error("preStep miss `refer` field")
+                return False
+                
+            if  preStep.get("response",None) == None:
+                logging.error("preStep miss `response` field")
+                return False
+                
+            resp = preStep.get("response")
             if preStep.get("addTo","") != "" and preStep['addTo'].get("type","") == "Headers":
-                if preStep.get("refer",None) != None and preStep.get("response",None) != None:
-                    resp = preStep.get("response")
-                    for data in preStep.get("refer"):
-                        field_relation = data.get("field")
-                        alias_name = preStep['addTo'].get("location")
-                        token_type = resp.get("token_type","")
-                        self.headers[alias_name] = f"{token_type} {extractField(field_refer=field_relation, body=resp)}"
+                for data in preStep.get("refer"):
+                    field_relation = data.get("field")
+                    alias_name = preStep['addTo'].get("location")
+                    token_type = resp.get("token_type","")
+                    self.headers[alias_name] = f"{token_type} {extractField(field_refer=field_relation, body=resp)}"
             elif preStep['addTo'].get("type","") == "Body":
-                if preStep.get("refer",None) != None and preStep.get("response",None) != None:
-                    resp = preStep.get("response")
-                    for key,value in self.data.items():
-                        if type(value) == str and "$" in value:
-                            data_refer_parts = value.split("$")
-                            field_refer = searchInPreSteps(data_refer_parts[1],self.pre)
-                            
-                            if field_refer is None:
-                                    # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
-                                    # log: not found prestep / prestep.{key} / prestep.refer.name
-                                    exit(1)
-                            field_value = extractField(field_refer,resp)
-                            if field_value is None:
-                                # 根据引用关系无法在response中提取到具体的value
-                                # log: not extract field value
-                                exit(1)
-                            self.data[key] = field_value
-                        continue
+                for key,value in self.data.items():
+                    if type(value) == str and "$" in value:
+                        data_refer_parts = value.split("$")
+                        value, ok = self.getReferData(data_refer_parts[1],self.pre,resp)
+                        if not ok:
+                            return False
+                        self.data[key] = value
+                    continue
                     
             elif preStep['addTo'].get("type","") in  ["Path","Query"]:
                 # 处理type是Query / Path
-                if preStep.get("refer",None) != None and preStep.get("response",None) != None:
-                    resp = preStep.get('response')
-                    if "{{" in self.request_url and "}}" in self.request_url:
-                        refer_regex = r"\{\{(.*)\}\}"
-                        regex_obj = re.search(refer_regex,self.request_url)
-                        refer_relation = regex_obj.group(1)
-                        if refer_relation != "":
-                            field_refer = searchInPreSteps(refer_relation, self.pre)
-                            if field_refer is None:
-                                # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
-                                # log: not found prestep / prestep.{key} / prestep.refer.name
-                                exit(1)
-                            field_value = extractField(field_refer,resp)
-                            if field_value is None:
-                                # 根据引用关系无法在response中提取到具体的value
-                                # log: not extract field value
-                                exit(1)
-                            # 提取的数据是int类型字段时，临时转成string
-                            self.request_url = str(self.request_url).replace("{{","",-1).replace("}}","",-1).replace(refer_relation,f"{field_value}", -1)
-                                
+                if "$" in self.request_url:
+                    url_parts = str(self.request_url).split("/")
+                    refer_relation = None
+                    for part in url_parts:
+                        if "$" in part:
+                            refer_relation = part.split("$")[1]
+                            break
+                    if refer_relation != "":
+                        value, ok = self.getReferData(refer_relation, self.pre, resp)
+                        if not ok:
+                            return False
+                        # 提取的数据是int类型字段时，临时转成string
+                        self.request_url = str(self.request_url).replace("$","",-1).replace(refer_relation,f"{value}",-1)
+        return True              
                                 
             
-    def run(self):
-        self.setPre()
+    def run(self) -> Error:
+        if not self.setPre():
+            # 设置preStep失败，中断执行
+            return SetPreStepError
         if self.setup is not None and callable(self.setup):
             print(f"running setup method `{self.setup.__name__}`")
             self.setup()
-        self.runRequest()
+        run_status = self.runRequest()
+        if run_status:
+            return run_status
         if self.end is not None and callable(self.end):
             print(f"running teardown method `{self.end.__name__}`")
             self.end()
         
-    def runRequest(self):
+    def runRequest(self) -> Error:
         resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result[0].get('desire')}, **{self.headers})")
         if exception is not None:
             logging.error(f"{self.method} {self.request_url} error, {exception}")
@@ -133,7 +149,8 @@ class Step:
             self.retry = self.retry - 1
             if self.retry >  0:
                 self.runRequest()
-            exit(1)
+            logging.error("Step exceed max retry times")
+            return RetryExcceedError
         logging.info(f"Run Step `{self.name}` Successfully")
         self.result = resp
 
