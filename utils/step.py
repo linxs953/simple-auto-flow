@@ -8,7 +8,7 @@
 import logging
 
 
-def searchInPreSteps(refer_express: str, preSteps: list):
+def searchStepInPres(refer_express: str, preSteps: list):
     if "." not in refer_express:
         # log: refer format error
         return
@@ -108,7 +108,6 @@ if __name__ == '__main__':
     ]
 
     field = searchInPreSteps("getToken.refer.token",preSteps)
-    # print(field)
     
     data = {
         "body":{
@@ -124,4 +123,3 @@ if __name__ == '__main__':
         "refresh_token": "9a11d2e7045c497c9cb4a1da27d9f2dc"
     }
     data = extractField("body.access_token.0.value",data)
-    # print(data)

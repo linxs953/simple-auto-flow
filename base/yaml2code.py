@@ -151,7 +151,6 @@ class YamlCase:
                 {teardown_func}
               )
             """
-            # print(element)
             stepesParam.append(
                 element
             )

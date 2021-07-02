@@ -1,3 +1,4 @@
+import logging
 import typing
 import sys
 sys.path.append(".")
@@ -19,9 +20,13 @@ class Suit:
             for p in step.pre:
                 p['response'] = eval(f"{p['response'].replace('$suit','self')}")
             # 执行step
-            step.run()
+            step_status = step.run()
+            if step_status:
+                exit(1)
             # 验证response
-            step.assert_result()
+            if not step.assert_result():
+                #  某个step断言失败，直接break
+                break
             # 验证成功，将step的结果写入到suit.result
             self.result[step.name] = step.result
 
