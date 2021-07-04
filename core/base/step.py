@@ -7,9 +7,9 @@ import sys
 
 sys.path.append(".")
 
-from base.session import Request
+from core.base.session import Request
 from urllib.parse import urlparse
-from utils.step import *
+from core.utils.step import *
 
 logging.basicConfig(level = logging.INFO)
 

@@ -14,7 +14,7 @@ from haralyzer import HarParser
 import json
 import sys
 sys.path.append("")
-from config import case_template
+from core.config import case_template
 from yapf.yapflib.yapf_api import FormatCode
 
 

@@ -3,7 +3,7 @@ import typing
 import sys
 sys.path.append(".")
 
-from base.step import Step
+from core.base.step import Step
 
 
 class Suit:
