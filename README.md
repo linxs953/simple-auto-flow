@@ -24,52 +24,64 @@
 ###### 1. 编写yaml
 
 ```yaml
+
 global:
-   host: "https://www.example.com"
+   host: "https://api.test.com"
    name: "Login"
-   retry: 5
+   retry: 1
 steps:
    - step:
       stepname: "getToken"
       request:
-        pre: {}
+        pre: []
         method: "POST"
-        host: "https://auth.example.com"
-        urlPath: "/token"
-        data: {}
+        host: "https://api.test.com"
+        urlPath: "/gettoken"
+        data: {
+          "username":"[username]",
+          "password":"[password]",
+        }
         header:
           User-Agent: ""
-      response:
-        code: 200
-        error: "success"
+      response: [
+        {
+          "field": "code",
+          "assert": "eq",
+          "desire": 200
+        }
+      ]
    - step:
-      stepname: "getDataList" 
+      stepname: "getTaskList" 
       retry: 5
       request:
         pre: 
           - name: "getToken"
+            response: "$suit.result['getToken']"
             addTo: 
-              type: "Headers" # Body / Query / Url 
-              location: "Authorization" # add to headers or request body
+              type: "Headers" # Headers / Body
+              location: "Authorization" # data.dataList.taskId
             refer:
               - name: "token"
-                field: "token"
-          - name: "getDataList"
-            refer: 
-              - name: "Id"
-                field: "data.dataList.Id" # response data refer relationship
-            addTo:
-              type: "Query"
-              location: "url"
-        method: "POST"
-        host: "https://example.com"
-        urlPath: "/serach/{{getDataList.refer.Id}}/"
+                field: "access_token"
+        method: "get"
+        host: "https://api.test.com"
+        urlPath: "/search"
         data: None
-        header:
-          User-Agent: ""
-      response:
-        code: 200
-        error: "success"
+        header: {
+          "Content-Type": "application/json; charset=utf-8",
+        }
+      response: [
+        {
+          "field": "code",
+          "assert": "eq",
+          "desire": 200
+        },
+        {
+          "field": "error",
+          "assert": "include",
+          "desire": "success"
+        }
+      ]
 ```
 
 ###### 2. 生成python代码
