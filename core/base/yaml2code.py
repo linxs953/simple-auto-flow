@@ -12,7 +12,7 @@ import yaml
 import logging
 import sys
 sys.path.append("")
-from config import case_template
+from core.config import case_template
 from yapf.yapflib.yapf_api import FormatCode
 
 

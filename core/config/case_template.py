@@ -1,8 +1,8 @@
 code = """
 import sys
 sys.path.append(".")
-from base.suit import Suit
-from base.step import Step
+from core.base.suit import Suit
+from core.base.step import Step
 import pytest
 from main import *
 class Test{}(Suit):

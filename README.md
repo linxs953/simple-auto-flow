@@ -24,52 +24,64 @@
 ###### 1. 编写yaml
 
 ```yaml
+
 global:
-   host: "https://www.example.com"
+   host: "https://api.test.com"
    name: "Login"
-   retry: 5
+   retry: 1
 steps:
    - step:
       stepname: "getToken"
       request:
-        pre: {}
+        pre: []
         method: "POST"
-        host: "https://auth.example.com"
-        urlPath: "/token"
-        data: {}
+        host: "https://api.test.com"
+        urlPath: "/gettoken"
+        data: {
+          "username":"[username]",
+          "password":"[password]",
+        }
         header:
           User-Agent: ""
-      response:
-        code: 200
-        error: "success"
+      response: [
+        {
+          "field": "code",
+          "assert": "eq",
+          "desire": 200
+        }
+      ]
    - step:
-      stepname: "getDataList" 
+      stepname: "getTaskList" 
       retry: 5
       request:
         pre: 
           - name: "getToken"
+            response: "$suit.result['getToken']"
             addTo: 
-              type: "Headers" # Body / Query / Url 
-              location: "Authorization" # add to headers or request body
+              type: "Headers" # Headers / Body
+              location: "Authorization" # data.dataList.taskId
             refer:
               - name: "token"
-                field: "token"
-          - name: "getDataList"
-            refer: 
-              - name: "Id"
-                field: "data.dataList.Id" # response data refer relationship
-            addTo:
-              type: "Query"
-              location: "url"
-        method: "POST"
-        host: "https://example.com"
-        urlPath: "/serach/{{getDataList.refer.Id}}/"
+                field: "access_token"
+        method: "get"
+        host: "https://api.test.com"
+        urlPath: "/search"
         data: None
-        header:
-          User-Agent: ""
-      response:
-        code: 200
-        error: "success"
+        header: {
+          "Content-Type": "application/json; charset=utf-8",
+        }
+      response: [
+        {
+          "field": "code",
+          "assert": "eq",
+          "desire": 200
+        },
+        {
+          "field": "error",
+          "assert": "include",
+          "desire": "success"
+        }
+      ]
 ```
 
 ###### 2. 生成python代码
@@ -94,12 +106,12 @@ pytest testcases/
 - **Suit**:       一个Suit描述的是一条用例，由多个Step组成，存储Step执行后的结果，供其他Step使用。
 <br>
 
-![执行流程](./assert/执行流程图.png)
+![执行流程](./core/assert/执行流程图.png)
 
 <br>
 <br>
 
-![运行原理](./assert/auto-flow-framework.png)
+![运行原理](./core/assert/auto-flow-framework.png)
 
 
 
@@ -108,11 +120,11 @@ pytest testcases/
 - [x] 支持yaml格式
 - [x] 能够转成python 测试代码
 - [x] 当前Step可以引用所在Case的前置Step的数据
+- [x] 支持har格式
 - [ ] 支持全局变量，多Suit共享
 - [ ] 支持报告
-- [ ] 支持har格式
-- [ ] 支持其他协议的接口  
 - [ ] 支持locust
+- [ ] 支持其他协议的接口  
 
 
  

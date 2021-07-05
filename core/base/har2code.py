@@ -14,7 +14,7 @@ from haralyzer import HarParser
 import json
 import sys
 sys.path.append("")
-from config import case_template
+from core.config import case_template
 from yapf.yapflib.yapf_api import FormatCode
 
 
@@ -87,7 +87,6 @@ class HarCase:
     
     
     def load_postdata(self, data: str):
-        print(data)
         try:
             return json.loads(data)
         except json.JSONDecodeError as e:
@@ -98,6 +97,8 @@ class HarCase:
     def load_response(self, data: str, encoding: str):
         if encoding == "base64":
             assert_resp_list = list()
+            if data == "":
+                return list()
             try:
                 resp_body = json.loads(base64.b64decode(data))
                 for k,v in resp_body.items():
@@ -187,5 +188,5 @@ class HarCase:
 
 
 if __name__ == '__main__':
-    har = HarCase("./har/test.har","./test.py")
+    har = HarCase("./example/har/test_har.har","./example/test.py")
     har.run()
