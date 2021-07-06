@@ -2,3 +2,4 @@ httpx
 yapf
 pytest
 haralyzer
+click
