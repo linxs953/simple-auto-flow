@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append(".")
+# sys.path.append(".")
 from core.base.suit import Suit
 from core.base.step import Step
 import pytest
