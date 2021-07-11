@@ -1,8 +1,5 @@
 from aifc import Error
-from cmath import log
 import logging
-from operator import truediv
-import re
 import sys
 
 sys.path.append(".")
