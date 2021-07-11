@@ -4,9 +4,9 @@ import sys
 
 sys.path.append(".")
 
-from core.base.session import Request
+from simat_core.base.session import Request
 from urllib.parse import urlparse
-from core.utils.step import *
+from simat_core.utils.step import *
 
 logging.basicConfig(level = logging.INFO)
 
