@@ -1,6 +1,6 @@
 code = """
-from core.base.suit import Suit
-from core.base.step import Step
+from simat_core.base.suit import Suit
+from simat_core.base.step import Step
 import pytest
 from main import *
 class Test{}(Suit):
