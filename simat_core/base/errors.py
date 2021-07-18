@@ -12,6 +12,8 @@ class TypeInvalidInGetData(Exception):
 class ListEmpty(Exception):
     pass
 
+class KeyNotFound(Exception):
+    pass
 
 class RetryExcceedError(Exception):
     pass

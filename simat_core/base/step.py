@@ -1,6 +1,7 @@
 from aifc import Error
+from lib2to3.pgen2.token import AMPER
 import logging
-from simat_core.base.errors import FieldNotFoundInResp, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
+from simat_core.base.errors import FieldNotFoundInResp, KeyNotFound, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
 import sys
 
 sys.path.append(".")
@@ -47,8 +48,10 @@ class Step:
 
     def get_data_from_array(self, arr: list, index:str):
         if type(arr) != list:
+            logging.error(f"reason: data type -> [{type(arr)}], desire to <class.list>")
             return TypeInvalidInGetData()
         if len(arr) == 0:
+            logging.error(f"reason: list lenght -> 0")
             return ListEmpty()
         index = int(index)
         return arr[index]
@@ -62,8 +65,11 @@ class Step:
 
     def get_data_from_dict(self,map: dict, key: str):
         if type(map) != dict:
+            logging.error(f"reason: data type -> [{type(map)}], desire to <class.dict>")
             return TypeInvalidInGetData()
-        return map.get(key,None)
+        if map.get(key, None) == None:
+            return KeyNotFound()
+        return map.get(key)
     
     
     def get_fielddata(self, expression: str):
@@ -83,8 +89,8 @@ class Step:
                 current_level_data = self.get_data_from_array(resp_data, level)
             else:
                 current_level_data = self.get_data_from_dict(resp_data, level)
-            if type(current_level_data) == Exception:
-                logging.error(f"list length == 0 or get_data type invalid")
+            if  isinstance(current_level_data, Exception):
+                logging.error(f"get data by `{level}` field falid.")
                 return "", current_level_data
             resp_data = current_level_data
         return resp_data,None
@@ -96,12 +102,12 @@ class Step:
             field_name = result.get("field")
             desire_result = result.get("desire")
             actual_result,err = self.get_fielddata(field_name)
-            if err != None:
+            if isinstance(err,Exception):
                 return False
             try:
                 assert self.assert_operations(desire_result, assert_ops,actual_result) == True
             except AssertionError:
-                logging.error(f"Assert Error {type(actual_result)}, {type(desire_result)}, {assert_ops}")
+                logging.error(f"[Assert Error] {field_name} should  {assert_ops} to  {desire_result}, but got {actual_result}")
                 return False
         logging.info(f"assert Step `{self.name}` successfully")
         return True
