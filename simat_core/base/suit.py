@@ -23,7 +23,7 @@ class Suit:
             # 验证response
             if not step.assert_result():
                 #  某个step断言失败，直接break
-                break
+                exit(1)
             # 验证成功，将step的结果写入到suit.result
             self.result[step.name] = step.result
 
