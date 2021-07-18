@@ -1,5 +1,6 @@
 from aifc import Error
 import logging
+from simat_core.base.errors import FieldNotFoundInResp, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
 import sys
 
 sys.path.append(".")
@@ -10,11 +11,6 @@ from simat_core.utils.step import *
 
 logging.basicConfig(level = logging.INFO)
 
-class RetryExcceedError(Error):
-    pass
-
-class SetPreStepError(Error):
-    pass
 
 class Step:
     def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
@@ -49,15 +45,63 @@ class Step:
         if symbol == "eq":
             return current == desire
 
+    def get_data_from_array(self, arr: list, index:str):
+        if type(arr) != list:
+            return TypeInvalidInGetData()
+        if len(arr) == 0:
+            return ListEmpty()
+        index = int(index)
+        return arr[index]
+    
+    def is_number(self, key: str)-> bool:
+        try:
+            key = int(key)
+            return True
+        except ValueError:
+            return False
+
+    def get_data_from_dict(self,map: dict, key: str):
+        if type(map) != dict:
+            return TypeInvalidInGetData()
+        return map.get(key,None)
+    
+    
+    def get_fielddata(self, expression: str):
+        if "." not in expression:
+            if self.result.get(expression,None) == None:
+                logging.error(f"{expression} not  found  in step `{self.name}` response")
+                return "", FieldNotFoundInResp()
+            return self.result.get(expression), None
+        level_parts = expression.split(".")
+        resp_data = self.result
+        for level in level_parts:
+            # refer field type
+            if type(resp_data) == str or type(resp_data) == int:
+                logging.error(f"{type(resp_data)} have not attribute {level}")
+                return "",NotAttribute()
+            if self.is_number(level):
+                current_level_data = self.get_data_from_array(resp_data, level)
+            else:
+                current_level_data = self.get_data_from_dict(resp_data, level)
+            if type(current_level_data) == Exception:
+                logging.error(f"list length == 0 or get_data type invalid")
+                return "", current_level_data
+            resp_data = current_level_data
+        return resp_data,None
+    
+    
     def assert_result(self) -> bool:
         for result in self.desire_result:
             assert_ops = result.get("assert")
-            field = result.get("field")
-            desire = result.get("desire")
+            field_name = result.get("field")
+            desire_result = result.get("desire")
+            actual_result,err = self.get_fielddata(field_name)
+            if err != None:
+                return False
             try:
-                assert self.assert_operations(desire, assert_ops,self.result[field]) == True
+                assert self.assert_operations(desire_result, assert_ops,actual_result) == True
             except AssertionError:
-                logging.error(f"Assert Error {type(self.result[field])}, {type(desire)}, {assert_ops}")
+                logging.error(f"Assert Error {type(actual_result)}, {type(desire_result)}, {assert_ops}")
                 return False
         logging.info(f"assert Step `{self.name}` successfully")
         return True

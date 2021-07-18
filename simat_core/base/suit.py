@@ -1,6 +1,4 @@
 import typing
-import sys
-sys.path.append(".")
 
 from simat_core.base.step import Step
 
