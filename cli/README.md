@@ -2,7 +2,7 @@
 
 ### Feature
 
-- Run testcase
-- generate testcase from yaml file or har file
-- run locusts
-- initial start project
+- [x] generate testcase from yaml file or har file
+- [ ] Run testcase
+- [ ] run locusts
+- [ ] initial start project

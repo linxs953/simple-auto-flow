@@ -1,9 +1,6 @@
-import logging
 import typing
-import sys
-sys.path.append(".")
 
-from core.base.step import Step
+from simat_core.base.step import Step
 
 
 class Suit:

@@ -5,3 +5,6 @@
 __pycache__
 testcases
 test_*.yaml
+*egg-info
+build/
+dist/
