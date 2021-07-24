@@ -1,14 +1,12 @@
 import click
 from atctl.utils.case import HarCase, YamlCase
 from atctl.common import *
+from atctl.templates.project import projectTemplate
+from atctl.utils.template import Template
 
 @click.group()
 def atctl():
     pass
-
-@atctl.command()
-def init_dependency():
-    print("init")
 
 @atctl.command()
 @click.option("-s", help="yaml / har file path")
@@ -80,5 +78,16 @@ def convert(s, o, yaml, har):
     return
 
 @atctl.command()
-def start_project():
+@click.argument("projectname", required=False, default=None)
+def start_project(projectname):
     click.echo("start new project")
+    '''
+    todo：project.yaml 验证
+    1. 读取project.yaml，获取项目结构信息
+    2. 通过relativePath创建目录和文件
+    '''
+
+    template = Template(projectTemplate)
+    if not template.init(projectname):
+        exit(1)
+        
