@@ -121,8 +121,26 @@ class YamlValidator(Validator):
             if not self.stepValidate(st):
                 return False
         
+        # 验证step_name 唯一性，以及 step.request.pre引用的正确性
+        logging.error(self.data)
+        all_steps = self.data.get('steps')
+        step_name_list = []
+        if len(all_steps) > 0:
+            for st in all_steps:
+                current_step_name = st.get('step').get('stepname')
+                if current_step_name in step_name_list:
+                    logging.error(f"stepname `{current_step_name}` redefined")
+                    return False
+                pre_steps = st.get('step').get('request').get('pre')
+                if len(pre_steps) > 0:
+                    for p in pre_steps:
+                        p_name = p.get('name')
+                        if p_name not in step_name_list:
+                            logging.error(f"`{st.get('step').get('stepname')}` refer not exist step `{p_name}`")
+                            return False
+                
+                step_name_list.append(current_step_name)
         return True
-    
 
 
 class HarValidator(Validator):
@@ -236,6 +254,9 @@ class YamlCase(CaseConvert):
             code = self.generate_code()
             self.write_file(code=code, path=self.output)
             logging.info(f"generate code `{self.output}` successfully")
+            return
+        # validate failed
+        exit(1)
 
 class HarCase(CaseConvert):
     def __init__(self, source: str, output: str):

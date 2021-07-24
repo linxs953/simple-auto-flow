@@ -16,8 +16,10 @@ def is_file(path):
     
     return os.path.isfile(path)
 
-def convert_relative_path(path)-> str:
+def convert_relative_path(path,base=None)-> str:
     pwd = os.getcwd()
+    if base is not None:
+        pwd = base
     pwd_parts = pwd.split("/")
     levels = path.split("/")[0]
     if len(levels) <= 1:
