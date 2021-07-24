@@ -21,6 +21,13 @@
 - 支持`Step` 和 `Suit`级别的重试
 ## Quick Start
 
+```shell
+pip3 install simat-core
+pip3 install atctl
+atctl start-project [project_name]
+```
+
+## Guide
 ###### 1. 编写yaml
 
 ```yaml
