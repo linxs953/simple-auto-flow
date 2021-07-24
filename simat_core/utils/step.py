@@ -107,7 +107,7 @@ if __name__ == '__main__':
         },
     ]
 
-    field = searchInPreSteps("getToken.refer.token",preSteps)
+    field = searchStepInPres("getToken.refer.token",preSteps)
     
     data = {
         "body":{
