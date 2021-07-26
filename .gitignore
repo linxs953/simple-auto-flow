@@ -8,3 +8,4 @@ test_*.yaml
 *egg-info
 build/
 dist/
+/venv/

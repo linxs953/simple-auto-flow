@@ -1,5 +1,4 @@
-from importlib_metadata import requires
-from setuptools import setup, find_packages 
+from setuptools import setup
 
 setup(
       name='simat_core',

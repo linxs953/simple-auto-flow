@@ -1,5 +1,8 @@
-httpx
-yapf
-pytest
-haralyzer
-click
+httpx~=0.18.2
+yapf~=0.31.0
+pytest~=6.2.4
+haralyzer~=2.0.0
+click~=8.0.1
+atctl~=0.1.0
+setuptools~=57.4.0
+Flask~=2.0.1
