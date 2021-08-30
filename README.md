@@ -113,12 +113,12 @@ pytest testcases/
 - **Suit**:       一个Suit描述的是一条用例，由多个Step组成，存储Step执行后的结果，供其他Step使用。
 <br>
 
-![执行流程](assert/执行流程图.png)
+![执行流程](img/执行流程图.png)
 
 <br>
 <br>
 
-![运行原理](assert/auto-flow-framework.png)
+![运行原理](img/auto-flow-framework.png)
 
 
 
