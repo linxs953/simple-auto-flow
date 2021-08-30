@@ -1,3 +1,4 @@
+import base64
 import yaml
 import logging
 import json
@@ -19,7 +20,7 @@ class Validator:
             return False
         return True    
     
-        # 验证字段是否存在
+    # 验证字段是否存在
     def fieldsExist(self,fields: list, mapper: dict) -> bool:
         for field in fields:
             if not self.haskey(mapper, field):
@@ -41,7 +42,10 @@ class YamlValidator(Validator):
             self.data['global']['retry'] = 2
         return True
     
-    # 验证字段是否存在
+    
+    """
+    验证dict key是否存在
+    """
     def fieldsExist(self,fields: list, mapper: dict) -> bool:
         for field in fields:
             if not self.haskey(mapper, field):
@@ -51,8 +55,11 @@ class YamlValidator(Validator):
                 logging.error(f"field [{field}] value empty in [{mapper}]")
                 return False
         return True
-                
-    
+     
+               
+    """
+    验证yaml request字段的合法性
+    """
     def requestValidate(self,request: dict) -> bool:
         # 验证string类型字段
         baseFieldList = ["method","host","urlPath", "pre", "data", "header"]
@@ -75,8 +82,11 @@ class YamlValidator(Validator):
                     return False    
         
         return True
-        
+       
      
+    """
+    验证yaml step字段的合法性
+    """
     def stepValidate(self,step: dict) -> bool:
         if not self.haskey(step, "step"):
             logging.error(f"stepname required in {step}")
@@ -121,13 +131,15 @@ class YamlValidator(Validator):
             if not self.stepValidate(st):
                 return False
         
-        # 验证step_name 唯一性，以及 step.request.pre引用的正确性
         logging.error(self.data)
+        
         all_steps = self.data.get('steps')
         step_name_list = []
         if len(all_steps) > 0:
             for st in all_steps:
                 current_step_name = st.get('step').get('stepname')
+                
+                # 验证step_name 唯一性
                 if current_step_name in step_name_list:
                     logging.error(f"stepname `{current_step_name}` redefined")
                     return False
@@ -135,6 +147,8 @@ class YamlValidator(Validator):
                 if len(pre_steps) > 0:
                     for p in pre_steps:
                         p_name = p.get('name')
+                        
+                        # 验证step.request.pre引用的正确性
                         if p_name not in step_name_list:
                             logging.error(f"`{st.get('step').get('stepname')}` refer not exist step `{p_name}`")
                             return False
@@ -198,6 +212,8 @@ class YamlCase(CaseConvert):
     
     def generate_step_param(self, steps: list) -> list:
         stepesParam = list()
+        
+        # 生个多个step参数
         for st in steps:
             s = st.get("step")
             setup_func = s.get('request').get('setup',None)
@@ -227,12 +243,16 @@ class YamlCase(CaseConvert):
         length = len(data['steps'])
         stepsCode = ""
         for i in range(length):
+            
+            # 处理最后一个的step时，不添加「,」
             if i == length - 1:
                 code = f"Step(*{params[i]})"
             else:
                 code = f"Step(*{params[i]}),"
             stepsCode += code
- 
+
+        # 获取case 模板代码
+        # 将stepsCode填充进模板中
         fileCode = case_template.code
         fileCode = fileCode.format(
             data.get('global').get('name'),
@@ -309,29 +329,41 @@ class HarCase(CaseConvert):
                 return assert_resp_list
             except json.JSONDecodeError as e:
                 logging.error(e)
-                return None
-        return None
+                return list()
+        return list()
             
     def generate_params(self)-> list:
         step_params = []
         for entry in self.data['entries']:
+            
+            # 获取request metadata
             request, response = entry['request'], entry['response']
             req_url, req_method, headers = request['url'],request['method'], request['headers']
             step_name = urlparse(req_url).path
+            
             req_headers = self.load_headers(headers)
             if not req_headers:
                 return None
             req_post_data = None
+            
+            # 获取post data
             if req_method == "POST":
                 if request['postData'].get('text') != "" and \
                         self.load_postdata(request['postData'].get('text')) != None:
                     req_post_data = self.load_postdata(request['postData'].get('text'))
+            
+            # 获取status code
             resp_code = response['status']
+            
+            # 设置desire status code 
             resp_body = [{"field": "code","assert": "eq","desire": resp_code}]
+            
+            # 把response的结果作为desire result添加到resp_body
             resp_body.extend(self.load_response(response['content'].get('text'),response['content'].get('encoding')))
             if not resp_body:
                 logging.error("load response faild got None")
                 return None
+            
             element = case_template.step.format(step_name,req_url,req_method,req_post_data,
                                       req_headers,resp_body,[],self.default_retry,None,None)
             step_params.append(element)
@@ -344,12 +376,15 @@ class HarCase(CaseConvert):
         length = len(steps)
         stepsCode = ""
         for i in range(length):
+            # 处理最后一个step时，不添加「,」
             if i == length - 1:
                 code = f"Step(*{steps[i]})"
             else:
                 code = f"Step(*{steps[i]}),"
             stepsCode += code
  
+        # 获取case 模板代码
+        # 将stepsCode填充进模板中
         fileCode = case_template.code
         fileCode = fileCode.format(
             self.output.split("/")[-1].split(".")[0],
