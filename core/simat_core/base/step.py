@@ -151,13 +151,11 @@ class Step:
     def getReferData(self,expression: str, pres: list, resp_data: dict):
         field_refer = searchStepInPres(expression,pres)
         if field_refer is None:
-                # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
-                # log: not found prestep / prestep.{key} / prestep.refer.name
-                return None, False
+            # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
+            return None, False
         field_value = extractField(field_refer,resp_data)
         if field_value is None:
             # 根据引用关系无法在response中提取到具体的value
-            # log: not extract field value
             return None, False
         return field_value,True
     
