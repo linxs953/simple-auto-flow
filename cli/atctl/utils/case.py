@@ -1,13 +1,11 @@
 import base64
 import yaml
-import logging
+from loguru import logger
 import json
 from atctl.templates import case_template
 from urllib.parse import urlparse
 from haralyzer import HarParser
 from yapf.yapflib.yapf_api import FormatCode
-
-logging.basicConfig(level = logging.INFO)
 
 class Validator:
     def __init__(self, data:dict) -> None:
@@ -24,11 +22,8 @@ class Validator:
     def fieldsExist(self,fields: list, mapper: dict) -> bool:
         for field in fields:
             if not self.haskey(mapper, field):
-                logging.error(f"field [{field} not found in [{mapper}]]")
+                logger.error(f"field [{field} not found in [{mapper}]]")
                 return False
-            # if type(mapper[field]) == str and mapper[field] == "":
-            #     logging.error(f"field [{field}] value empty in [{mapper}]")
-            #     return False
         return True
     
 class YamlValidator(Validator):
@@ -49,10 +44,10 @@ class YamlValidator(Validator):
     def fieldsExist(self,fields: list, mapper: dict) -> bool:
         for field in fields:
             if not self.haskey(mapper, field):
-                logging.error(f"field [{field} not found in [{mapper}]]")
+                logger.error(f"field [{field} not found in [{mapper}]]")
                 return False
             if type(mapper[field]) == str and mapper[field] == "":
-                logging.error(f"field [{field}] value empty in [{mapper}]")
+                logger.error(f"field [{field}] value empty in [{mapper}]")
                 return False
         return True
      
@@ -68,7 +63,7 @@ class YamlValidator(Validator):
         
         # 验证pre字段是否为list
         if type(request.get('pre')) != list:
-            logging.error("step.pre type is not list")
+            logger.error("step.pre type is not list")
             return False
         
         # 验证pre[i]中各字段
@@ -89,15 +84,15 @@ class YamlValidator(Validator):
     """
     def stepValidate(self,step: dict) -> bool:
         if not self.haskey(step, "step"):
-            logging.error(f"stepname required in {step}")
+            logger.error(f"stepname required in {step}")
             return False
         step = step['step']
         if not self.haskey(step, "stepname"):
-            logging.error(f"stepname required in {step}")
+            logger.error(f"stepname required in {step}")
             return False
             
         if not self.haskey(step, "request"):
-            logging.error("request field required")
+            logger.error("request field required")
             return False
         
         if not self.requestValidate(step.get("request")):
@@ -107,11 +102,11 @@ class YamlValidator(Validator):
     
     def validate(self) -> bool:
         if not hasattr(self, "data"):
-            logging.error("self not have data attr")
+            logger.error("self not have data attr")
             return False
         
         if not self.haskey(self.data,"global"):
-            logging.error("not set global")
+            logger.error("not set global")
             return False
         
         # check global field
@@ -119,11 +114,11 @@ class YamlValidator(Validator):
             return False
         
         if not self.haskey(self.data,"steps"):
-            logging.error("not define steps field")
+            logger.error("not define steps field")
             return False
         
         if len(self.data.get("steps")) == 0:
-            logging.error("steps not contains any step")
+            logger.error("steps not contains any step")
             return False
         
         for st in self.data.get("steps"):
@@ -131,7 +126,7 @@ class YamlValidator(Validator):
             if not self.stepValidate(st):
                 return False
         
-        logging.error(self.data)
+        logger.error(self.data)
         
         all_steps = self.data.get('steps')
         step_name_list = []
@@ -141,7 +136,7 @@ class YamlValidator(Validator):
                 
                 # 验证step_name 唯一性
                 if current_step_name in step_name_list:
-                    logging.error(f"stepname `{current_step_name}` redefined")
+                    logger.error(f"stepname `{current_step_name}` redefined")
                     return False
                 pre_steps = st.get('step').get('request').get('pre')
                 if len(pre_steps) > 0:
@@ -150,7 +145,7 @@ class YamlValidator(Validator):
                         
                         # 验证step.request.pre引用的正确性
                         if p_name not in step_name_list:
-                            logging.error(f"`{st.get('step').get('stepname')}` refer not exist step `{p_name}`")
+                            logger.error(f"`{st.get('step').get('stepname')}` refer not exist step `{p_name}`")
                             return False
                 
                 step_name_list.append(current_step_name)
@@ -273,7 +268,7 @@ class YamlCase(CaseConvert):
             # yaml 验证成功
             code = self.generate_code()
             self.write_file(code=code, path=self.output)
-            logging.info(f"generate code `{self.output}` successfully")
+            logger.info(f"generate code `{self.output}` successfully")
             return
         # validate failed
         exit(1)
@@ -290,18 +285,18 @@ class HarCase(CaseConvert):
             try:
                 content = HarParser(json.loads(harfile.read()))
             except Exception as e:
-                logging.error(e)
+                logger.error(e)
                 return
         return content.har_data
     
     def load_headers(self, header_list: list) -> dict:
         if type(header_list) != list:
-            logging.error(f"convert headers failed! desire list but got {type(header_list)}")
+            logger.error(f"convert headers failed! desire list but got {type(header_list)}")
             return None
         headers = {}
         for h in header_list:            
             if h.get("name",None) == None or h.get("value", None) == None:
-                logging.error("not found header name or value")
+                logger.error("not found header name or value")
                 return None
             headers[h['name']] = h['value']
         return headers
@@ -310,7 +305,7 @@ class HarCase(CaseConvert):
         try:
             return json.loads(data)
         except json.JSONDecodeError as e:
-            logging.error(f"load post data error for {e}")
+            logger.error(f"load post data error for {e}")
             return None
         
     def load_response(self, data: str, encoding: str):
@@ -328,7 +323,7 @@ class HarCase(CaseConvert):
                     assert_resp_list.append(single_field)
                 return assert_resp_list
             except json.JSONDecodeError as e:
-                logging.error(e)
+                logger.error(e)
                 return list()
         return list()
             
@@ -361,7 +356,7 @@ class HarCase(CaseConvert):
             # 把response的结果作为desire result添加到resp_body
             resp_body.extend(self.load_response(response['content'].get('text'),response['content'].get('encoding')))
             if not resp_body:
-                logging.error("load response faild got None")
+                logger.error("load response faild got None")
                 return None
             
             element = case_template.step.format(step_name,req_url,req_method,req_post_data,
@@ -393,15 +388,15 @@ class HarCase(CaseConvert):
             self.output.split("/")[-1].split(".")[0],
         )
         if self.write_file(code=fileCode, path=self.output):
-            logging.info("generate testfile successfully")
+            logger.info("generate testfile successfully")
             return True
-        logging.error("generate testfile failed")
+        logger.error("generate testfile failed")
         return False
 
     def run(self):
         if not self.validator.validate():
             exit(1)
-        logging.info("validate successfully ")
+        logger.info("validate successfully ")
         if not self.write_code():
             exit(1)
 

@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 
 
@@ -7,7 +7,7 @@ import os
 """
 def is_dir(path):
     if not os.path.exists(path):
-        logging.error(f"{path} not exists")
+        logger.error(f"{path} not exists")
         return False
     
     return os.path.isdir(path)
@@ -17,7 +17,7 @@ def is_dir(path):
 """
 def is_file(path):
     if not os.path.exists(path):
-        logging.error(f"{path} not exists")
+        logger.error(f"{path} not exists")
         return False
     
     return os.path.isfile(path)
@@ -51,7 +51,7 @@ def convert_relative_path(path,base=None)-> str:
     # 如果有两个「.」就显示base的上一级路径
     end_index = len(pwd_parts) - len(levels) + 1
     if end_index >= len(pwd_parts):
-        logging.error("convert relative to absolute path error")
+        logger.error("convert relative to absolute path error for base path index outof range")
         return
     
     # 根据「.」的数量，组装pwd_parts成一个path，替换掉原有的「.」

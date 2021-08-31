@@ -20,3 +20,6 @@ class RetryExcceedError(Exception):
 
 class SetPreStepError(Exception):
     pass
+
+class StatusCodeInvalidException(Exception):
+    pass

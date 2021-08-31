@@ -1,7 +1,7 @@
 
 
 import base64
-import logging
+from loguru import logger
 import os
 import binascii
 import yaml
@@ -48,8 +48,8 @@ class Template:
             os.makedirs(dir_path, exist_ok=True)
             return True
         except Exception as e:
-            logging.error(f"mkdir {dir_path} failed")
-            logging.error(e)
+            logger.error(f"mkdir {dir_path} failed")
+            logger.error(e)
             return False
     
     def generate_file(self, path, content)-> bool:
@@ -62,8 +62,8 @@ class Template:
                 file.write(file_data)
             return True
         except binascii.Error  as e:
-            logging.error(f"decode  failed")
-            logging.error(e)
+            logger.error(f"decode file content failed")
+            logger.error(e)
             return False
         
     

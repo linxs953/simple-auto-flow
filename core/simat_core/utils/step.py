@@ -1,5 +1,4 @@
-import logging
-
+from loguru import logger
 
 """
 通过refer_express去preSteps中寻找要提取extract的field-expression
@@ -26,7 +25,7 @@ def searchStepInPres(refer_express: str, preSteps: list):
         if index+1 == len(preSteps):
             # 这里其实不会出现pre step找不到的情况，在解析yaml的时候会验证引用是否合法有效，这里主要再做个保险
             #  log: not found step
-            logging.error(f"not found step {refer_express_parts[0]}")
+            logger.error(f"not found step {refer_express_parts[0]}")
             return
     
     result = step
@@ -100,7 +99,7 @@ def extractField(field_refer: str, body: dict):
                 # log: not dict, return None, for not found data by refer_expression
                 return
         except Exception as e:
-            logging.error(e)
+            logger.error(f"extract field data from refer expression failed for  {str(e)}")
             exit(1)
     return field
     
