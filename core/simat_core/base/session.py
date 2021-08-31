@@ -1,13 +1,9 @@
+from core.simat_core.base.errors import StatusCodeInvalidException
 import json
-import logging
-
+from loguru import logger
 import httpx
 
 req_timeout = 10
-
-
-class StatusCodeInvalidException(Exception):
-    pass
 
 
 class Request:
@@ -22,49 +18,51 @@ class Request:
 
     def POST(self, url: str, data: dict, code: int, **headers) -> (dict, Exception):
         self.set_headers(**headers)
+        resp_metadata = dict(url=url,headers=headers,method="POST",data=data,code=code)
         try:
             resp = self.client.post(url=url, data=data, headers=self.client.headers)
-            
-            # 验证response statusCode是否与code一致
             if resp.status_code != code:
-                return \
-                  dict(), \
+                resp_metadata['code'] = resp.status_code
+                return resp_metadata, \
                   StatusCodeInvalidException(f"Got invalid status code {resp.status_code}, expected {code}")
             if resp.text == "":
-                return dict(), None
+                resp_metadata['code'] = resp.status_code
+                return resp_metadata, None
             resp_data = json.loads(resp.text)
-            
-            #  将statusCode加入到返回值中，作为上层断言使用
             resp_data['code'] = resp.status_code
             return dict(resp_data), None
         except httpx.TimeoutException as timeout:
-            logging.error(timeout)
-            return dict(), timeout
+            resp_metadata['code'] = -1
+            logger.error(f"Runner send POST request timeout for {str(timeout)}")
+            return resp_metadata, timeout
         except Exception as e:
-            logging.error(e)
-            return dict(), e
+            resp_metadata['code'] = -1
+            logger.error(f"Runner send POST request occur error for {str(e)}")
+            return resp_metadata, e
 
-    def GET(self, url: str, params, code: int, **headers) -> (dict, Exception):
+    def GET(self, url: str, params, code: int,data=None,**headers) -> (dict, Exception):
         self.set_headers(**headers)
+        resp_metadata =  dict(url=url,headers=headers,method="GET",data=data)
         try:
             resp = self.client.get(url, params=params)
-            
-            # 验证response statusCode是否与code一致
             if resp.status_code != code:
                 # 返回的状态码不对
-                return \
-                  dict(), \
+                resp_metadata['code'] = resp.status_code
+                return resp_metadata, \
                   StatusCodeInvalidException(f"Got invalid status code {resp.status_code}, {code}")
             if resp.text == "":
-                return dict(), None
+                resp_metadata['code'] = resp.status_code
+                return resp_metadata, None
             resp_data = json.loads(resp.text)
-            
-            #  将statusCode加入到返回值中，作为上层断言使用
             resp_data['code'] = resp.status_code
             return dict(resp_data), None
-        except StatusCodeInvalidException as sce:
-            logging.error(sce)
-            return dict(), sce
+        except httpx.TimeoutException as timeout:
+            resp_metadata['code'] = -1
+            logger.error(f"Runner send GET request timeout for {str(timeout)}")
+            return resp_metadata, timeout
+        except Exception as hxe:
+            logger.error(f"Runner send GET request failed for {str(hxe)}")
+            return resp_metadata, hxe
 
     def Delete(self, url):
         # todo

@@ -1,17 +1,11 @@
-from aifc import Error
+from loguru import logger
 from core.simat_core.base.errors import RetryExcceedError
-from lib2to3.pgen2.token import AMPER
-import logging
 from simat_core.base.errors import FieldNotFoundInResp, KeyNotFound, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
 import sys
-
 sys.path.append(".")
-
 from simat_core.base.session import Request
 from urllib.parse import urlparse
 from simat_core.utils.step import *
-
-logging.basicConfig(level = logging.INFO)
 
 
 class Step:
@@ -37,7 +31,7 @@ class Step:
     """
     def assert_operations(self, desire, symbol, current)-> bool:
         if type(desire) != type(current):
-            logging.error("desire value type not equal to current type")
+            logger.error("Assert Error: desire value type not equal to current type")
             return False
         if symbol == "gt":
             return current > desire
@@ -45,7 +39,7 @@ class Step:
             return current < desire
         if symbol == "include":
             if type(desire) != str:
-                logging.error("assert symbol set [include],data type unsuppport except str")
+                logger.error("Assert Error: operation set include, but desire type not str")
                 return False
             return desire in current
         if symbol == "eq":
@@ -58,10 +52,10 @@ class Step:
     """
     def get_data_from_array(self, arr: list, index:str):
         if type(arr) != list:
-            logging.error(f"reason: data type -> [{type(arr)}], desire to <class.list>")
+            logger.error(f"data type get  -> [{type(arr)}], desire to <class.list>")
             return TypeInvalidInGetData()
         if len(arr) == 0:
-            logging.error(f"reason: list lenght -> 0")
+            logger.error(f"list lenght get 0")
             return ListEmpty()
         if len(arr) <= index:
             return IndexError()
@@ -84,7 +78,7 @@ class Step:
     """
     def get_data_from_dict(self,map: dict, key: str):
         if type(map) != dict:
-            logging.error(f"reason: data type -> [{type(map)}], desire to <class.dict>")
+            logger.error(f"data type get  -> [{type(map)}], desire to <class.dict>")
             return TypeInvalidInGetData()
         if map.get(key, None) == None:
             return KeyNotFound()
@@ -96,7 +90,7 @@ class Step:
     def get_fielddata(self, expression: str):
         if "." not in expression:
             if self.result.get(expression,None) == None:
-                logging.error(f"{expression} not  found  in step `{self.name}` response")
+                logger.error(f"`{expression}` not  found  in step `{self.name}` response")
                 return "", FieldNotFoundInResp()
             
             # expression只有一层，说明是字段名，直接返回
@@ -109,7 +103,7 @@ class Step:
             
             # 当前resp_data不是对象类型
             if type(resp_data) == str or type(resp_data) == int:
-                logging.error(f"{type(resp_data)} have not attribute {level}")
+                logger.error(f"{type(resp_data)} have not attribute {level}")
                 return "",NotAttribute()
             
             if self.is_number(level):
@@ -121,10 +115,10 @@ class Step:
             
             # 通过level去获取对象数据时，出现异常
             if  isinstance(current_level_data, Exception):
-                logging.error(f"get data by `{level}` field falid.")
+                logger.error(f"get data by `{level}` falid.")
                 return "", current_level_data
             resp_data = current_level_data
-        return resp_data,None
+        return resp_data, None
     
     
     """
@@ -141,9 +135,9 @@ class Step:
             try:
                 assert self.assert_operations(desire_result, assert_ops,actual_result) == True
             except AssertionError:
-                logging.error(f"[Assert Error] {field_name} should  {assert_ops} to  {desire_result}, but got {actual_result}")
+                logger.error(f"Assert Error: {field_name} should  {assert_ops} to  {desire_result}, but got {actual_result}")
                 return False
-        logging.info(f"assert Step `{self.name}` successfully")
+        logger.info(f"assert Step `{self.name}` successfully")
         return True
     
     def get_url_path(self) -> str:
@@ -157,13 +151,11 @@ class Step:
     def getReferData(self,expression: str, pres: list, resp_data: dict):
         field_refer = searchStepInPres(expression,pres)
         if field_refer is None:
-                # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
-                # log: not found prestep / prestep.{key} / prestep.refer.name
-                return None, False
+            # 找不到step，可能是引用了不存在的prestep，找不到key，与refer中无法匹配定义的字段
+            return None, False
         field_value = extractField(field_refer,resp_data)
         if field_value is None:
             # 根据引用关系无法在response中提取到具体的value
-            # log: not extract field value
             return None, False
         return field_value,True
     
@@ -171,12 +163,12 @@ class Step:
         for preStep in self.pre:
             # 验证preStep对象，判断是否有refer字段
             if preStep.get("refer",None) == None:
-                logging.error("preStep miss `refer` field")
+                logger.error("preStep object miss `refer` field")
                 return False
             
             # 验证preStep对象，判断是否有response字段
             if  preStep.get("response",None) == None:
-                logging.error("preStep miss `response` field")
+                logger.error("preStep object  miss `response` field")
                 return False
                 
             resp = preStep.get("response")
@@ -225,7 +217,7 @@ class Step:
         return True              
                                 
             
-    def run(self) -> Error:
+    def run(self) -> Exception:
         if not self.setPre():
             # 设置preStep失败，中断执行
             return SetPreStepError
@@ -246,19 +238,22 @@ class Step:
         if run_status:
             return run_status
         
-    def runRequest(self) -> Error:
+    def runRequest(self) -> Exception:
         resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result[0].get('desire')}, **{self.headers})")
         
         # runner执行失败，进行重试
         if exception is not None:
-            logging.error(f"{self.method} {self.request_url} error, {exception}")
-            logging.info(f"send request failed for {exception}")
+            logger.error(f"{self.method} {self.request_url} error, {exception}")
+            logger.error(f"send request failed for {exception}")
+            logger.info(
+                f"request metadata\nmethod: {resp.method}\nurl: {resp.url}\ncode: {resp.code}\nbody: {str(resp.data)}\nheaders: {str(resp.headers)}"
+            )
             self.retry = self.retry - 1
             if self.retry >  0:
                 self.runRequest()
-            logging.error("Step exceed max retry times")
+            logger.error("Step exceed max retry times")
             return RetryExcceedError
-        logging.info(f"Run Step `{self.name}` Successfully")
+        logger.info(f"Run Step `{self.name}` Successfully")
         self.result = resp
 
 

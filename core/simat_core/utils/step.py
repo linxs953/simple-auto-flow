@@ -1,5 +1,4 @@
-import logging
-
+from loguru import logger
 
 """
 通过refer_express去preSteps中寻找要提取extract的field-expression
@@ -8,7 +7,7 @@ import logging
 def searchStepInPres(refer_express: str, preSteps: list):
     # 验证引用的格式，必须包含.字符
     if "." not in refer_express:
-        # log: refer format error
+        logger.error("refer-prestep expression format error")
         return
     
     refer_express_parts = refer_express.split(".")
@@ -26,7 +25,7 @@ def searchStepInPres(refer_express: str, preSteps: list):
         if index+1 == len(preSteps):
             # 这里其实不会出现pre step找不到的情况，在解析yaml的时候会验证引用是否合法有效，这里主要再做个保险
             #  log: not found step
-            logging.error(f"not found step {refer_express_parts[0]}")
+            logger.error(f"not found step `{refer_express_parts[0]}`")
             return
     
     result = step
@@ -36,22 +35,24 @@ def searchStepInPres(refer_express: str, preSteps: list):
     for i in range(1,len(refer_express_parts)):
         try:
             if type(result) == list:
-                for index_,f in enumerate(result):
+                for index_,ele in enumerate(result):
                     # 处理refer数组
                     # 如果当前type(result)==list && reuslt == step.refer
                     #   - 判断express(getToken.refer.token)引用的字段名token在refer中是否可以找到，找到就return
-                    if f.get('name') == refer_express_parts[i]:
-                        field = f['field'] 
+                    if ele.get('name', None) == refer_express_parts[i]:
+                        field = ele['field'] 
                         return field
                     if index_+1 == len(result):
-                        # 这里出现的情况是：result是refer字段，然后无法匹配refer中定义的字段
-                        # log: not found refer name
+                        # 这里出现的情况是：
+                        #   - result此时是refer对象，然后无法匹配refer中定义的字段
+                        #   - 在steps中找不到expression中引用的步骤（不太可能出现，在yaml初始化的时候会去检查）
+                        logger.error("not found refered-field named {} pre-step.refer", refer_express_parts[i])
                         return
             else:
                 result = step[refer_express_parts[i]]
         except KeyError as k:
             # 这里其实不是出现key找不到的情况，在解析yaml的时候会验证引用是否合法有效，这里主要再做个保险
-            # log: not found key in xxx
+            logger.error("key `{}` not found in map `{}`", refer_express_parts[i], step)
             return
 
 
@@ -61,9 +62,8 @@ def searchStepInPres(refer_express: str, preSteps: list):
 """
 
 def extractField(field_refer: str, body: dict):
-    # 验证引用的格式，必须包含.字符
     if "." not in field_refer:
-        #  有可能字段名错误拿不到值，返回None
+        #  有可能字段名错误拿不到值，这里如果字段名错误默认返回None
         field = body.get(field_refer,None)
         return field
     
@@ -81,27 +81,32 @@ def extractField(field_refer: str, body: dict):
             refer_index = int(field_refer_parts[key])
             field = field[refer_index]
             continue
+        
         except IndexError:
-            # log: index out of range
+            logger.error("`{}` index out of range in `{}`",refer_index, field)
             return
+        
         except AttributeError:
-            # log: None object can not any attr
+            logger.error("there are no attributes in `{}` object ", field)
             return
+        
         except ValueError:
             # 要提取的数据一般不能为空，所以这里假定key正确时，获取的字段是不允许为空的，所以只有找不到key的时候返回None
             if field is None:
-                # log: none type object
+                logger.error("extract field can not be None")
                 return
             
             # 如果field_refer_parts[key]不是数字，而是一个dict key
             if type(field) == dict:
                 field = field.get(field_refer_parts[key], None)
             else:
-                # log: not dict, return None, for not found data by refer_expression
+                logger.error("extract field type not dict or list")
                 return
+        
         except Exception as e:
-            logging.error(e)
-            exit(1)
+            logger.error(f"extract field data from refer expression failed for  {str(e)}")
+            return
+        
     return field
     
         
