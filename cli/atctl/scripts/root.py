@@ -1,4 +1,5 @@
 import click
+from loguru import logger
 from atctl.utils.case import HarCase, YamlCase
 from atctl.common import *
 from atctl.templates.project import projectTemplate
@@ -15,15 +16,15 @@ def atctl():
 @click.option("-har", is_flag=True, help="convert har file", default=False)
 def convert(s, o, yaml, har):
     if s == "" or o == "":
-        logging.error("source file path and output file path can not be empty")
+        logger.error("source file path and output file path can not be empty")
         exit(1)
     
     if yaml and har:
-        logging.error("-y and -har is alternative")
+        logger.error("-y and -har is alternative")
         exit(1)
     
     if not yaml and not har:
-        logging.error("not assgin file type , such -y or -har")
+        logger.error("not assgin file type , such -y or -har")
         exit(1)
     
     if yaml:
@@ -41,16 +42,16 @@ def convert(s, o, yaml, har):
 
     if not os.path.exists(output_full_path) \
             or not os.path.exists(source_full_path):
-        logging.error("source file or output file path not exist")   
+        logger.error("source file or output file path not exist")   
         exit(1)
     
     if not os.path.isdir(output_full_path):
-        logging.error("output path must be dir")
+        logger.error("output path must be dir")
         exit(1)
     
     if is_file(source_full_path):
         if source_full_path.split('.')[1] != file_type:
-            logging.error(f"file type -> {source_full_path.split('.')[1]} but assign -{file_type}") 
+            logger.error(f"file type -> {source_full_path.split('.')[1]} but assign -{file_type}") 
             exit(1)
         output_file_path = f"{output_full_path}{source_full_path.split('/')[-1].replace(file_type,'py',-1)}"
         if yaml:
