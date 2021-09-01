@@ -2,7 +2,7 @@ code = """
 from simat_core.base.suit import Suit
 from simat_core.base.step import Step
 import pytest
-from main import *
+from linxs import *
 class Test{}(Suit):
     def setup_method(self, method):
         self.init_resource([])
