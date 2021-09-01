@@ -125,9 +125,7 @@ class YamlValidator(Validator):
             # validate step
             if not self.stepValidate(st):
                 return False
-        
-        logger.error(self.data)
-        
+                
         all_steps = self.data.get('steps')
         step_name_list = []
         if len(all_steps) > 0:
@@ -197,7 +195,8 @@ class YamlCase(CaseConvert):
     def __init__(self, source: str, output: str) -> None:
         super().__init__(source, output)
         self.validator = YamlValidator(self.load())
-        self.output = self.format_output(output) 
+        self.output = self.format_output(output)
+        self.default_retry = 5 
     
     def format_output(self, output):
         if self.validator.validate():
@@ -214,15 +213,19 @@ class YamlCase(CaseConvert):
             setup_func = s.get('request').get('setup',None)
             teardown_func  = s.get('request').get('teardown_func',None)
             url = f"{s.get('request').get('host')}{s.get('request').get('urlPath')}"
+            if type(s.get("request").get("data")) == str:
+                data  = "\"\"\"{}\"\"\"".format(s.get("request").get("data"))
+            else:
+                data = s.get("request").get("data")
             element = f"""(
                 "{s.get("stepname")}",
                 "{url}",
                 "{s.get("request").get("method")}",
-                {s.get("request").get("data")},
+                {data},
                 {s.get("request").get("header")},
                 {s.get("response")},
                 {s.get("request").get("pre")},
-                {s.get("retry")},
+                {s.get("retry", self.default_retry)},
                 {setup_func},
                 {teardown_func}
               )
