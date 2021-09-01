@@ -1,4 +1,4 @@
-from core.simat_core.base.errors import StatusCodeInvalidException
+from simat_core.base.errors import StatusCodeInvalidException
 import json
 from loguru import logger
 import httpx
@@ -23,10 +23,12 @@ class Request:
             resp = self.client.post(url=url, data=data, headers=self.client.headers)
             if resp.status_code != code:
                 resp_metadata['code'] = resp.status_code
+                resp_metadata['resp'] = resp.text
                 return resp_metadata, \
                   StatusCodeInvalidException(f"Got invalid status code {resp.status_code}, expected {code}")
             if resp.text == "":
                 resp_metadata['code'] = resp.status_code
+                resp_metadata['resp'] = ""
                 return resp_metadata, None
             resp_data = json.loads(resp.text)
             resp_data['code'] = resp.status_code
@@ -40,18 +42,23 @@ class Request:
             logger.error(f"Runner send POST request occur error for {str(e)}")
             return resp_metadata, e
 
-    def GET(self, url: str, params, code: int,data=None,**headers) -> (dict, Exception):
+    # params参数后面考虑去掉，目前用不上，需要改动atctl
+    def GET(self, url: str, data: dict, code: int, params=None, **headers) -> (dict, Exception):
         self.set_headers(**headers)
+        if data == None or data == "":
+            data = dict()
         resp_metadata =  dict(url=url,headers=headers,method="GET",data=data)
         try:
             resp = self.client.get(url, params=params)
             if resp.status_code != code:
                 # 返回的状态码不对
                 resp_metadata['code'] = resp.status_code
+                resp_metadata['resp'] = resp.text
                 return resp_metadata, \
                   StatusCodeInvalidException(f"Got invalid status code {resp.status_code}, {code}")
             if resp.text == "":
                 resp_metadata['code'] = resp.status_code
+                resp_metadata['resp'] = ''
                 return resp_metadata, None
             resp_data = json.loads(resp.text)
             resp_data['code'] = resp.status_code

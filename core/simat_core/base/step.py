@@ -1,12 +1,12 @@
 from loguru import logger
-from core.simat_core.base.errors import RetryExcceedError
+from simat_core.base.errors import RetryExcceedError
 from simat_core.base.errors import FieldNotFoundInResp, KeyNotFound, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
-import sys
-sys.path.append(".")
 from simat_core.base.session import Request
 from urllib.parse import urlparse
 from simat_core.utils.step import *
 
+# 分割线
+splitline = "-"*50 + "request metadata" + "-"*50
 
 class Step:
     def __init__(self, stepname: str,  request_url: str, method: str, data: dict, 
@@ -239,14 +239,27 @@ class Step:
             return run_status
         
     def runRequest(self) -> Exception:
-        resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result[0].get('desire')}, **{self.headers})")
-        
+        if type(self.data) == str:
+            # 兼容/POST接口 data必须是字符串（此处强转string）
+            resp, exception = eval(f"self.session.{self.method}('{self.request_url}',\"\"\"{self.data}\"\"\",{self.desire_result[0].get('desire')}, **{self.headers})")
+        else:
+            resp, exception = eval(f"self.session.{self.method}('{self.request_url}',{self.data},{self.desire_result[0].get('desire')}, **{self.headers})")
         # runner执行失败，进行重试
         if exception is not None:
-            logger.error(f"{self.method} {self.request_url} error, {exception}")
-            logger.error(f"send request failed for {exception}")
+            resp_content = resp.get('resp',None)
             logger.info(
-                f"request metadata\nmethod: {resp.method}\nurl: {resp.url}\ncode: {resp.code}\nbody: {str(resp.data)}\nheaders: {str(resp.headers)}"
+                "/{} {} failed\n{}\nmethod: {}\n\nurl: {}\n\ncode: {}\n\nbody: {}\n\nheaders: {}\n\nresponse: {}\n{}\n".format(
+                    str(resp['method']).upper(),
+                    urlparse(resp['url']).path,
+                    splitline,
+                    resp['method'],
+                    resp['url'],
+                    resp['code'],
+                    str(resp['data']),
+                    str(resp['headers']),
+                    resp_content,
+                    splitline
+                )
             )
             self.retry = self.retry - 1
             if self.retry >  0:
