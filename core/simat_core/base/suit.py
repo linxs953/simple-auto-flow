@@ -19,14 +19,16 @@ class Suit:
             # 执行step
             step_status = step.run()
             if step_status:
-                exit(1)
+               # exit(1)
+               return False
             # 验证response
             if not step.assert_result():
                 #  某个step断言失败，直接break
-                exit(1)
+               # exit(1)
+               return False
             # 验证成功，将step的结果写入到suit.result
             self.result[step.name] = step.result
-
+        return True
 
 if __name__ == '__main__':
     pass

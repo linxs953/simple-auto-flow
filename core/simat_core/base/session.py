@@ -3,7 +3,7 @@ import json
 from loguru import logger
 import httpx
 
-req_timeout = 10
+req_timeout = 60
 
 
 class Request:
@@ -20,7 +20,7 @@ class Request:
         self.set_headers(**headers)
         resp_metadata = dict(url=url,headers=headers,method="POST",data=data,code=code)
         try:
-            resp = self.client.post(url=url, data=data, headers=self.client.headers)
+            resp = self.client.post(url=url, data=data, headers=self.client.headers,timeout=req_timeout)
             if resp.status_code != code:
                 resp_metadata['code'] = resp.status_code
                 resp_metadata['resp'] = resp.text
@@ -49,7 +49,7 @@ class Request:
             data = dict()
         resp_metadata =  dict(url=url,headers=headers,method="GET",data=data)
         try:
-            resp = self.client.get(url, params=params)
+            resp = self.client.get(url, timeout=req_timeout)
             if resp.status_code != code:
                 # 返回的状态码不对
                 resp_metadata['code'] = resp.status_code

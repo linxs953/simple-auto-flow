@@ -37,6 +37,8 @@ class Step:
             return current > desire
         if symbol == "lt":
             return current < desire
+        if symbol == "ge":
+            return current >= desire
         if symbol == "include":
             if type(desire) != str:
                 logger.error("Assert Error: operation set include, but desire type not str")
@@ -224,19 +226,24 @@ class Step:
         
         # 有设置setup方法，执行setup方法
         if self.setup is not None and callable(self.setup):
-            print(f"running setup method `{self.setup.__name__}`")
+            logger.info(f"running setup method `{self.setup.__name__}`")
             self.setup()
         
         run_status = self.runRequest()
         
+        # runner运行case失败，把error返回
+        if run_status is not None:
+            if self.retry > 0:
+                self.retry = self.retry - 1
+                self.run()
+            logger.error("Step exceed max retry times")
+        
         # 有设置teardown方法，执行teardown方法
         if self.end is not None and callable(self.end):
-            print(f"running teardown method `{self.end.__name__}`")
+            logger.info(f"running teardown method `{self.end.__name__}`")
             self.end()
         
-        # runner运行case失败，把error返回
-        if run_status:
-            return run_status
+        return run_status
         
     def runRequest(self) -> Exception:
         if type(self.data) == str:
@@ -261,11 +268,12 @@ class Step:
                     splitline
                 )
             )
-            self.retry = self.retry - 1
-            if self.retry >  0:
-                self.runRequest()
-            logger.error("Step exceed max retry times")
-            return RetryExcceedError
+            return exception
+            # self.retry = self.retry - 1
+            # if self.retry >  0:
+            #     self.runRequest()
+            # logger.error("Step exceed max retry times")
+            # return RetryExcceedError
         logger.info(f"Run Step `{self.name}` Successfully")
         self.result = resp
 
