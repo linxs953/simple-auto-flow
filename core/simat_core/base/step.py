@@ -1,3 +1,4 @@
+from core.simat_core.base.errors import SetupMethodException, TeardownMethodException
 from loguru import logger
 from simat_core.base.errors import RetryExcceedError
 from simat_core.base.errors import FieldNotFoundInResp, KeyNotFound, ListEmpty, NotAttribute, SetPreStepError, TypeInvalidInGetData
@@ -227,7 +228,9 @@ class Step:
         # 有设置setup方法，执行setup方法
         if self.setup is not None and callable(self.setup):
             logger.info(f"running setup method `{self.setup.__name__}`")
-            self.setup()
+            setup_status = self.setup()
+            if setup_status is not None or setup_status is False:
+                return SetupMethodException
         
         run_status = self.runRequest()
         
@@ -241,7 +244,9 @@ class Step:
         # 有设置teardown方法，执行teardown方法
         if self.end is not None and callable(self.end):
             logger.info(f"running teardown method `{self.end.__name__}`")
-            self.end()
+            teardown_status = self.end()
+            if teardown_status is not None or teardown_status is False:
+                return TeardownMethodException
         
         return run_status
         
