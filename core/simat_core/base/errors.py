@@ -23,3 +23,9 @@ class SetPreStepError(Exception):
 
 class StatusCodeInvalidException(Exception):
     pass
+
+class SetupMethodException(Exception):
+    pass
+
+class TeardownMethodException(Exception):
+    pass

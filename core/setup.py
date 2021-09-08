@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
       name='simat_core',
-      version='0.0.9',
+      version='0.1.0',
       description='simple autoflow framework',
       author='linxs',
       author_email='cakelinxs@outlook.com',
