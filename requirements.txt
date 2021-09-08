@@ -3,3 +3,8 @@ yapf
 pytest
 haralyzer
 click
+requests
+xlrd
+xlwt
+xlutils
+pytest-rerunfailures
