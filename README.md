@@ -120,6 +120,27 @@ pytest testcases/
 
 ![运行原理](img/auto-flow-framework.png)
 
+#### 模块设计
+
+- cli模块
+  - init
+    - 初始化一个项目模块
+  - code generate
+    - 转换har文件成python code / yaml / json
+- core模块
+  - Suit
+    - 管理一组Step对象，调用Step的`run`和`assert`方法，进行用例的执行和用例结果断言，并存储每个Step的结果
+  - Step
+    - 一条用例的抽象
+    - 解析request中引用数据表达式，获取真实数据进行填充
+      - 解析Body参数引用
+      - 解析header引用
+      - 解析url参数引用
+      - 解析对response数据的引用
+    - 包含一条用例的生命周期，`组装api请求数据`，`api请求pre-action`，`发起api调用`，`response结果断言`，`api请求after-action`
+    - 用例重试
+  - Runner
+    - 封装http方法，发起api调用的模块
 
 
 ## Feature

@@ -88,7 +88,7 @@ class Step:
         return map.get(key)
     
     """
-        通过expression从response json中获取值
+        通过expression从response json中获取值
     """
     def get_fielddata(self, expression: str):
         if "." not in expression:
